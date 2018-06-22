@@ -35,12 +35,27 @@ def svm_loss_naive(W, X, y, reg):
       if margin > 0:
         loss += margin
 
+        # We express loss function in term of W_j and W_yi
+        # So when calculate gradient we must calculate partial derivative with respect to W_j and W_yi (sub-gradient)
+        
+        # Collect gradient over all classes j and X training samples, hence use the += sign.
+        dW[:, j] += X[i] 
+        # Collect gradient over all satified classes of X[i] and all X, hence use the -= sign. 
+        dW[:, y[i]] -= X[i]      
+
+
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
+  dW /= num_train
 
   # Add regularization to the loss.
-  loss += reg * np.sum(W * W)
+  #
+  # For mathematical convenient we multiply loss by 0.5 (convenitent when we regularize)
+  loss += 0.5 * reg * np.sum(W * W)
+
+  # Add regularization to the gradient.
+  dW += reg * W
 
   #############################################################################
   # TODO:                                                                     #
