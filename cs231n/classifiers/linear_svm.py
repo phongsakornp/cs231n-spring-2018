@@ -127,7 +127,23 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  
+  # We have to collect each sub gradient of each sample (x1, x2,...)
+  # We have to find the number of loss for each sub-W.
+  # First transform loss matrix to 1 and 0 (for loss and no-loss), no-loss already be zero.
+  # This is the number of loss for each sub-W. (W_j for j != y_i)
+  loss_idxs = np.where(Loss_M > 0)
+  Loss_M[loss_idxs] = 1
+
+  # To find the number of loss of W_y_i, we have to add up all loss number for each sample (row).
+  number_of_loss = np.sum(Loss_M, axis=1)
+  Loss_M[range(0, num_train), y] = -number_of_loss
+
+  # Then to collect sub-gradients, we multiply (dot product) this to X, 
+  # But we have to transpose it first to align correctly, and then we transpose back to dW.
+  dW = (Loss_M.T.dot(X)).T
+  dW /= num_train
+  dW += reg * W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
