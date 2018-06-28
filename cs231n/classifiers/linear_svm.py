@@ -92,14 +92,25 @@ def svm_loss_vectorized(W, X, y, reg):
   Y_i = scores[range(0, num_train), y]
   Y_i = Y_i.reshape((num_train, 1))
 
-  # Calculate margin
+  # Calculate margin from scores
   M = scores - Y_i + 1
 
+  # Solution 1:  
   # Pick loss indices that have margin greater than zero; max(0,-)
   # These will included loss at y_i.
-  loss_idxs = np.where(M > 0)
+  # loss_idxs = np.where(M > 0)
   # Subtract the loss at y_i for each x_i
-  loss = np.sum(M[loss_idxs]) - 1*num_train 
+  # loss = np.sum(M[loss_idxs]) - 1*num_train 
+
+  # Solution 2:
+  # Use numpy.maximum()
+  # Clear out y_i from margin
+  M[range(0, num_train), y] = 0
+  # Calculate loss from margin with max(0, -), elementwise compare.
+  Loss_M = np.maximum(np.zeros(M.shape), M)
+  
+  # Calculate total loss
+  loss = np.sum(Loss_M)
   loss /= num_train
   loss += 0.5 * reg * np.sum(W * W)
   #############################################################################
