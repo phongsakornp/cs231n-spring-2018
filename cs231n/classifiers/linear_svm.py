@@ -86,31 +86,29 @@ def svm_loss_vectorized(W, X, y, reg):
   #############################################################################
   num_classes = W.shape[1]
   num_train = X.shape[0]
-  scores = X.dot(W)
+  Scores = X.dot(W)
 
   # Pick y_i of each X_i
-  Y_i = scores[range(0, num_train), y]
-  Y_i = Y_i.reshape((num_train, 1))
+  y_i = Scores[range(0, num_train), y]
+  y_i = y_i.reshape((num_train, 1))
 
   # Calculate margin from scores
-  M = scores - Y_i + 1
+  Margin = Scores - y_i + 1
 
-  # Solution 1:  
-  # Pick loss indices that have margin greater than zero; max(0,-)
+  # Solution 1: Pick loss indices that have margin greater than zero; max(0,-)  
   # These will included loss at y_i.
   # loss_idxs = np.where(M > 0)
   # Subtract the loss at y_i for each x_i
   # loss = np.sum(M[loss_idxs]) - 1*num_train 
 
-  # Solution 2:
-  # Use numpy.maximum()
-  # Clear out y_i from margin
-  M[range(0, num_train), y] = 0
+  # Solution 2: Use numpy.maximum()
+  # Remove y_i elements.
+  Margin[range(0, num_train), y] = 0
   # Calculate loss from margin with max(0, -), elementwise compare.
-  Loss_M = np.maximum(np.zeros(M.shape), M)
-  
+  Loss = np.maximum(0, Margin)
+
   # Calculate total loss
-  loss = np.sum(Loss_M)
+  loss = np.sum(Loss)
   loss /= num_train
   loss += 0.5 * reg * np.sum(W * W)
   #############################################################################
@@ -129,19 +127,21 @@ def svm_loss_vectorized(W, X, y, reg):
   #############################################################################
   
   # We have to collect each sub gradient of each sample (x1, x2,...)
-  # We have to find the number of loss for each sub-W.
-  # First transform loss matrix to 1 and 0 (for loss and no-loss), no-loss already be zero.
-  # This is the number of loss for each sub-W. (W_j for j != y_i)
-  loss_idxs = np.where(Loss_M > 0)
-  Loss_M[loss_idxs] = 1
+  # First find the number of loss for each sub-W (count number of loss, W_j for j != y_i)
+  
+  # loss_idxs = np.where(Loss > 0)
+  # Loss[loss_idxs] = 1
+  Loss_count = Loss
+  Loss_count[Loss > 0] = 1
 
-  # To find the number of loss of W_y_i, we have to add up all loss number for each sample (row).
-  number_of_loss = np.sum(Loss_M, axis=1)
-  Loss_M[range(0, num_train), y] = -number_of_loss
-
+  # To find the number of loss for each element W at y_i, we have to add up all loss number for each sample (row).
+  # And assign it to element y_i (negative value)
+  loss_row_count = np.sum(Loss_count, axis=1)
+  Loss_count[range(0, num_train), y] = -loss_row_count
+  
   # Then to collect sub-gradients, we multiply (dot product) this to X, 
   # But we have to transpose it first to align correctly, and then we transpose back to dW.
-  dW = (Loss_M.T.dot(X)).T
+  dW = X.T.dot(Loss_count)
   dW /= num_train
   dW += reg * W
   #############################################################################
