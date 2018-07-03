@@ -29,7 +29,20 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  
+  num_train = X.shape[0]
+  num_class = W.shape[1]
+  scores = X.dot(W)
+
+  for i in range(num_train):
+    # Normalize to prevent numerical unstability.
+    score_i = scores[i]
+    normalized_score_i = score_i - np.amax(score_i)
+    loss += - np.log( np.e**normalized_score_i[y[i]] / np.sum(np.e**normalized_score_i) )
+
+  loss /= num_train
+  loss += 0.5 * reg * np.sum(W * W)
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
