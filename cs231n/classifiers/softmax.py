@@ -38,11 +38,21 @@ def softmax_loss_naive(W, X, y, reg):
     # Normalize to prevent numerical unstability.
     score_i = scores[i]
     normalized_score_i = score_i - np.amax(score_i)
-    loss += - np.log( np.e**normalized_score_i[y[i]] / np.sum(np.e**normalized_score_i) )
-
+    sum_e_score_i = np.sum(np.e**normalized_score_i)
+    loss += - np.log( np.e**normalized_score_i[y[i]] / sum_e_score_i )
+    
+    for j in range(num_class):
+      if j != y[i]:
+        dW[:, j] += (np.e**normalized_score_i[j] / sum_e_score_i) * X[i]
+     
+    dW[:, y[i]] += ((np.e**normalized_score_i[y[i]] - sum_e_score_i) / sum_e_score_i) * X[i]
+    
   loss /= num_train
   loss += 0.5 * reg * np.sum(W * W)
 
+  dW /= num_train
+  # Add regularization to the gradient.
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
