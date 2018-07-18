@@ -75,10 +75,9 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    dot1 = X.dot(W1) + b1
-    h1 = np.maximum(0, dot1)
-    dot2 = h1.dot(W2) + b2
-    scores = dot2
+    p = X.dot(W1) + b1
+    h = np.maximum(0, p)
+    scores = h.dot(W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -114,7 +113,19 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    dscores = softmax # [N X C]
+    dscores[range(N), y] -= 1
+    dscores /= N
+    dh = dscores.dot(W2.T) # [N X H]
+    dh[p <= 0] = 0
+    dp = dh # [N X H]
+    grads['W1'] = X.T.dot(dp) # [D X H]
+    grads['b1'] = np.sum(dp, axis=0)  # [H,]
+    grads['W2'] = h.T.dot(dscores) # [H X C]
+    grads['b2'] = np.sum(dscores, axis=0) # [C, ]
+    grads['W1'] += reg * W1
+    grads['W2'] += reg * W2
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
